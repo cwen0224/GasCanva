@@ -1,0 +1,56 @@
+﻿**********************
+Windows PowerShell 轉譯開始
+開始時間: 20260513203010
+使用者名稱: SIVANSROGALLY\cwen0
+RunAs 使用者: SIVANSROGALLY\cwen0
+設定名稱: 
+電腦: SIVANSROGALLY (Microsoft Windows NT 10.0.26200.0)
+主應用程式: PowerShell.exe -noexit -WorkingDirectory C:\Users\cwen0\Desktop\GasCanva\GAS
+處理序識別碼: 11496
+PSVersion: 5.1.26100.8328
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.8328
+BuildVersion: 10.0.26100.8328
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+已啟動轉譯，輸出檔為 C:\Users\cwen0\Desktop\GasCanva\GAS\diagnostic_report.txt
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> Write-Host "`n--- [1] GitHub 帳號權限檢查 ---" -ForegroundColor Yellow
+
+--- [1] GitHub 帳號權限檢查 ---
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> gh auth status
+github.com
+  ✓ Logged in to github.com account cwen0224 (keyring)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'gist', 'read:org', 'repo'
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> Write-Host "`n--- [2] 倉庫基礎配置檢查 ---" -ForegroundColor Yellow
+
+--- [2] 倉庫基礎配置檢查 ---
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> gh repo view "$userName/$repoName" --json name,visibility,defaultBranchRef,isArchived
+
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> Write-Host "`n--- [3] GitHub Pages 設定狀態 (API 直接查詢) ---" -ForegroundColor Yellow
+
+--- [3] GitHub Pages 設定狀態 (API 直接查詢) ---
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> # 這邊不導向 Null，我們要看它吐什麼
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> gh api "repos/$userName/$repoName/pages"
+
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> Write-Host "`n--- [4] 檢查最近的 Actions 執行紀錄 ---" -ForegroundColor Yellow
+
+--- [4] 檢查最近的 Actions 執行紀錄 ---
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> # 查看是否有 Pages 相關的 Workflow 在跑
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> gh run list --repo "$userName/$repoName" --limit 5
+
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> Write-Host "`n--- [5] 檢查 Pages 歷史建置紀錄 ---" -ForegroundColor Yellow
+
+--- [5] 檢查 Pages 歷史建置紀錄 ---
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> gh api "repos/$userName/$repoName/pages/builds" --limit 3
+
+PS C:\Users\cwen0\Desktop\GasCanva\GAS> Stop-Transcript
+**********************
+Windows PowerShell 轉譯結束
+結束時間: 20260513203013
+**********************

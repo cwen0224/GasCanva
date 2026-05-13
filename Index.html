@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/2.9.5/dom-to-image-more.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&family=Noto+Sans+TC:wght@300;400;700&display=swap');
+    body { background: #111; color: #eee; font-family: 'Noto Sans TC', sans-serif; padding: 20px; }
+    #preview-viewport { zoom: 0.35; border: 12px solid #333; display: inline-block; background: #000; border-radius: 8px; }
+    #log { background: #000; color: #0f0; padding: 15px; height: 180px; overflow-y: auto; font-family: monospace; font-size: 12px; border: 1px solid #444; border-radius: 8px; }
+  </style>
+</head>
+<body>
+<div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+  <div class="lg:col-span-7 flex flex-col items-center">
+    <div id="preview-viewport">
+      <?!= HtmlService.createHtmlOutputFromFile('Template').getContent(); ?>
+    </div>
+  </div>
+  <div class="lg:col-span-5 space-y-6">
+    <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
+      <h2 class="text-xl font-bold mb-4 flex items-center"><span class="mr-2">🚀</span> 控制面板</h2>
+      <div class="space-y-4">
+        <button onclick="fetchData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold transition">讀取待處理資料</button>
+        <button onclick="startBatch()" id="btn-batch" class="w-full bg-green-600 hover:bg-green-500 py-3 rounded-lg font-bold transition hidden">開始批量產圖</button>
+      </div>
+    </div>
+    <div id="log">等待操作...</div>
+  </div>
+</div>
+
+<script>
+  let pendingData = [];
+  let currentIdx = 0;
+
+  function addLog(msg) {
+    const log = document.getElementById('log');
+    log.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function fetchData() {
+    addLog("正在從試算表抓取資料...");
+    google.script.run.withSuccessHandler(res => {
+      if (res.success && res.data.length > 0) {
+        pendingData = res.data;
+        addLog(`成功讀取 ${pendingData.length} 筆資料`);
+        document.getElementById('btn-batch').classList.remove('hidden');
+        updateUI(pendingData[0]);
+      } else {
+        addLog("目前沒有待處理的資料 (狀態非 Done)");
+      }
+    }).apiGetPendingData();
+  }
+
+  function startBatch() {
+    currentIdx = 0;
+    processNext();
+  }
+
+  function processNext() {
+    if (currentIdx >= pendingData.length) {
+      addLog("✅ 所有任務已完成！");
+      return;
+    }
+    const item = pendingData[currentIdx];
+    updateUI(item);
+    
+    setTimeout(() => {
+      const node = document.getElementById('capture-target');
+      domtoimage.toPng(node, { width: 1080, height: 1350, style: { transform: 'scale(1)', transformOrigin: 'top left' } })
+      .then(dataUrl => {
+        google.script.run.withSuccessHandler(() => {
+          addLog(`已完成: ${item.title}`);
+          currentIdx++;
+          processNext();
+        }).apiSaveImage(dataUrl, `${item.year}_${item.title}.png`, item.rowId);
+      });
+    }, 1500);
+  }
+
+  function updateUI(item) {
+    // 修復背景圖片語法
+    document.getElementById('ui-bg').style.backgroundImage = `url('${item.bgBase64}')`;
+    document.getElementById('ui-year').innerText = item.year;
+    document.getElementById('ui-date').innerText = item.date;
+    document.getElementById('ui-title').innerText = item.title;
+    document.getElementById('ui-desc').innerText = item.description;
+    document.getElementById('ui-brand-name').innerText = item.brandName;
+    
+    // 注入陰影控制
+    const target = document.getElementById('capture-target');
+    if (target) {
+      target.style.setProperty('--shadow-color', item.shadowColor);
+      target.style.setProperty('--shadow-opacity', item.shadowOpacity);
+    }
+  }
+</script>
+</body>
+</html>
